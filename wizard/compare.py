@@ -9,6 +9,9 @@ from __future__ import print_function, division
 import emcee
 import numpy as np
 
+def compare(**kwargs):
+    pass
+
 def _chi2(pz_other, pz, cov):
     from scipy import linalg
     cv_chol = linalg.cholesky(cov, lower=True)
