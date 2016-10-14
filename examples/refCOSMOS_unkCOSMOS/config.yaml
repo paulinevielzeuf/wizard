@@ -1,0 +1,214 @@
+# what commands are we running
+run:
+- make_directories
+- dataset
+- paircounts
+- combine
+- dndz
+- plot
+- compare
+
+# verbose config:
+# 0: print nothing
+# 1: print only upon completing full item
+# 2: print everything
+verbose: 2
+
+# commands for munging input data
+dataset:
+    # data paths.
+    # If an hdf file and a list, first entry is path, second key
+    # If a fits file, just loads
+
+    reference_data_path:
+    - dataset/cosmos_galaxies.h5
+    - catalog
+    reference_random_path:
+    - dataset/cosmos_randoms.h5
+    - catalog
+    unknown_data_path:
+    - dataset/cosmos_galaxies.h5
+    - catalog
+    unknown_random_path:
+    - dataset/cosmos_randoms.h5
+    - catalog
+
+    load_dataset: False                                                         # If True, load from dataset_path
+    dataset_path: dataset/dataset.h5
+                                                                                # write out all catalog
+
+    reference_columns:                                                          # columns to load up
+    - RA
+    - DEC
+    - Z_MEAN_DES
+    - Z_MC_DES
+    - Z_COSMOS
+
+    reference_ra_column: RA                                                     # name of RA column
+    reference_dec_column: DEC                                                   # name of DEC column
+    reference_w_column: ''                                                      # name of W column
+
+    unknown_columns:
+    - RA
+    - DEC
+    - Z_MEAN_DES
+    - Z_MC_DES
+    - Z_COSMOS
+
+    unknown_ra_column: RA                                                       # name of RA column
+    unknown_dec_column: DEC                                                     # name of DEC column
+    unknown_w_column: ''                                                        # name of W column
+
+    max_objects: 30000000                                                       # maximum number of
+                                                                                # objects in catalog
+    label_every: 10000                                                          # when assigning bins,
+                                                                                # set the chunk size
+
+    # valid nside = power of 2. For each factor of 2, 4x more pixels (beware!)
+    healpix_nside: 64                                                            # nside to assign
+    # this part can be easily manipulated for an executable script
+    healpix_filter_size: 2                                                      # If filtering by hpix, size
+    healpix_filter_start: -1                                                    # if >= 0, do filtering
+    # we can look at the subdistributions by dividing up the dataset
+    # each dictionary is key: [type, [params]]
+    # if type is between:
+    # each entry is made as np.arange(min, max, step) so note that max may NOT be included!
+    # note for numbering that we also compute for BELOW and ABOVE these
+    # ranges. so reference__*_region == 0 is below starting point
+    # if type is equal
+    # then then list of entries after it are THE entries we select. These will
+    # be integerized according to order in entry, with reference__*_region == 0
+    # meaning any entries that are NOT in the list.
+    unknown_bins:
+        Z_COSMOS:
+        - between
+        -
+            - 0.
+            - 1.21
+            - 0.4
+    reference_bins:
+        Z_COSMOS:
+        - between
+        -
+            - 0.
+            - 1.31
+            - 0.025
+
+# commands for calculating paircounts
+paircounts:
+
+    # load up saved dataset. If dataset is run, will take those results
+    paircounts_path: paircounts/
+    load_paircounts: False # if True, just load
+    load_paircounts_path_only: True # If True, when loading paircounts, only load the path
+    overwrite: False # if True, overwrite any existing files
+    keep_empty: False # if True, save entries even if they have no pairs
+
+    # properties for treecorr
+    min_sep: 0.01                                                               # arcmin
+    max_sep: 180                                                                # arcmin
+    nbins: 100                                                                  # bins logarithmic
+
+    # when paircounting, we divide by healpixel nside. There is no point in
+    # looking at pairs that are very far away, because they are beyond maximum
+    # separation. I am not sure how to a priori decide what neighbors need to be
+    # counted, however. This sets that number manually. 2 should be sufficient
+    # for 3 degrees nside 32.
+    # -1 -> do all pairs
+    healpix_neighbors: -1
+
+# config for combining paircounts
+combine:
+    combine_path: combine/
+    jackknife_nside: 64                                                          # nside for jackknives
+    load_combine: False                                                         # if True, just load
+
+dndz:
+
+    dndz_path: dndz/results.h5
+    load_dndz: False                                                            # if True, just load
+
+    # can integrate either paircounts or w
+    integrate: paircounts
+    # estimators: [LS, Natural, ...]
+    w_estimator: LS
+
+    # weighting configuration
+    # [angular, physical, comoving]
+    units: physical
+    # if not using angle, need redshift value to look at
+    redshift_column: Z_COSMOS
+
+    # set the integration radii
+    r_min: 0.01
+    r_max: 0.1
+    # powerlaw weighting
+    power: -1
+
+    # when integrating angular bins, set chunk size
+    chunk_size: 9999
+
+    # set the normalization for redshift
+    z_min: 0.1
+    z_max: 0.95
+
+    # covariance calculation
+    # [full, tomo, diagonal]
+    cov_type: diagonal
+
+    # Keys listed here are explicitly summed over, so that it was as if we
+    # hadn't included them in unknown_bins or reference_bins
+    # combine_keys:
+    # - unknown__Z_region
+
+plot:
+
+    plot_path: plot/
+
+    # column we want to compare against in the catalog
+    redshift_catalog_columns:
+    # - Z_MC_DES
+    - Z_COSMOS
+
+    # label for plot that goes with paircounts
+    label: COSMOS-cluster
+    label_cat: COSMOS
+
+compare:
+
+    compare_path: compare/
+
+    # catalog comparison will use the unknown dataset
+    # column used for catalog redshift
+    redshift_catalog_column: Z_MC_DES
+
+    # emcee parameters
+    nwalkers: 64                                                                # number of walkers
+    nburnin: 500                                                                # burn in run
+    nrun: 2000                                                                  # number of samples
+
+    # priors
+    # [kind, weight, {kwargs}]
+    # calls scipy stats objects
+    gamma_prior:
+    - uniform
+    - 1
+    -
+        loc: -8
+        scale: 16
+    deltaz_prior:
+    - truncnorm
+    - 1
+    -
+        a: -8.0
+        b: 8.0
+        loc: 0
+        scale: 0.05
+    amplitude_prior:
+    - truncnorm
+    - 1
+    -
+        a: -5.0
+        b: 5.0
+        loc: 0
+        scale: 1.0

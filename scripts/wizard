@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+"""
+Commandline Interpreter
+
+Takes in the yaml files and does all the action for you!
+
+.. module:: wizard
+"""
+
+from __future__ import print_function
+
+import wizard
+
+def parse_args():
+    """Handle command line arguments.
+
+    Really only takes in a yaml file for now
+    """
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+            'config_file', type=str, nargs='?',
+            help='the configuration file')
+    args = parser.parse_args()
+
+    return args
+
+def main():
+    args = parse_args()
+
+    # load config
+    config = wizard.config.read_config(args.config_file)
+
+    # run wizard
+    wizard.wizard(config)
+
+if __name__ == '__main__':
+    main()
