@@ -13,6 +13,10 @@ from .paircounts import paircounts
 from .combine import combine
 from .dndz import dndz
 from .plot import plot
+from .compare_noz_fom import compare_noz_fom
+from .FoM import FoM
+from .plot_FoM import plot_FoM
+
 
 def read_config(file_name):
     """Read a configuration dictionary from a file
@@ -41,7 +45,10 @@ def make_directories(config):
              'combine': ['combine_path'],
              'dndz': ['dndz_path'],
              'plot': ['plot_path'],
-             'compare': ['compare_path'],}
+             'compare': ['compare_path'],
+             'compare_noz_fom': ['compare_noz_fom_path'],
+              'FoM' : ['FoM_path'],
+              'plot_FoM' : ['plot_path'],}
     for i in paths:
         if i in config:
             for j in paths[i]:
@@ -140,17 +147,55 @@ def wizard(config):
                     time0i = 0
             z_min = config['dndz']['z_min']
             z_max = config['dndz']['z_max']
+
+
             # redshift_column = config['dndz']['redshift_column']
             plot(phi, cov, stats, tags, unknown_catalogs[0], redshift_bins,
                  z_min=z_min, z_max=z_max, #redshift_column=redshift_column,
                  time0=time0,
                  **config['plot'])
+
         elif entry == 'compare':
+
             # fit to another catalog
 
             # repeat plotting
             pass
+        elif entry == 'compare_noz_fom':
+                if time0:
+                    print('compare_noz_fom', time() - time0)
+                    if config['verbose'] > 1:
+                            time0i = time()
+                    else:
+                            time0i = 0
+                z_min = config['dndz']['z_min']
+                z_max = config['dndz']['z_max']
+                path_rec=config['dndz']['dndz_path']
+                biaised_nz=compare_noz_fom(phi,tags,unknown_catalogs[0], redshift_bins,
+                z_min=z_min, z_max=z_max, path_rec=path_rec,#redshift_column=redshift_column,
+                time0=time0,
+                **config['compare_noz_fom'])
+        elif entry == 'FoM':
+                if time0:
+                    print('compare_noz_fom', time() - time0)
+                    if config['verbose'] > 1:
+                            time0i = time()
+                    else:
+                            time0i = 0
+                cosmosissource = 'source my-source'
+                Nz_path=config['compare_noz_fom']['compare_noz_fom_path']
+                fom=FoM(Nz_path=Nz_path,time0=time0,**config['FoM'])
+        elif entry == 'plot_FoM':
+                if time0:
+                    print('compare_noz_fom', time() - time0)
+                    if config['verbose'] > 1:
+                            time0i = time()
+                    else:
+                            time0i = 0
+                fom_path=config['FoM']['FoM_path']
+                comp=config['compare_noz_fom']['redshift_catalog_columns']
+                bins=config['dataset']['unknown_bins']
+                plot_fom=plot_FoM(fom_path=fom_path,comp=comp,bins=bins,time0=time0,**config['plot_FoM'])
 
     if time0:
         print('done', time() - time0)
-

@@ -310,7 +310,9 @@ def catalog_to_histogram(z, bins, weights=None, z_min=None, z_max=None):
         pdf, bins_out = np.histogram(z, bins, weights=weights)
 
     centers = 0.5 * (bins_out[1:] + bins_out[:-1])
-
+    edges=bins_out
+    conds_edges = (edges > z_min) & (edges < z_max)
+    edges=edges[conds_edges]
     conds = (centers > z_min) & (centers < z_max)
     centers = centers[conds]
     pdf = pdf[conds]
@@ -320,7 +322,7 @@ def catalog_to_histogram(z, bins, weights=None, z_min=None, z_max=None):
     if norm == 0:
         norm = 1
 
-    return pdf / norm, centers
+    return pdf / norm, centers ,edges
 
 def _modify_indices_redshift(self_z, other_z, other_index_in=None):
     if not other_index_in:

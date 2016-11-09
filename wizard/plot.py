@@ -12,7 +12,7 @@ from .compare import _chi2
 def plot(pcs, covs, stats, tags, unknown_catalog, redshift_bins,
          plot_path='', label='', label_cat='',
          redshift_column='Z', redshift_catalog_columns=['Z'],
-         z_min=0, z_max=1.0, time0=0,
+         z_min=0, z_max=1.2, time0=0,
          **kwargs):
     """Create plots comparing the paircounts with the catalogs
 
@@ -29,6 +29,7 @@ def plot(pcs, covs, stats, tags, unknown_catalog, redshift_bins,
     -------
     """
     if time0: from time import time
+
     # determine the tag
     unique_pc_tags = pcs[tags].drop_duplicates().reset_index(drop=True)
 
@@ -78,7 +79,7 @@ def plot(pcs, covs, stats, tags, unknown_catalog, redshift_bins,
                 weights = unknown_catalog[conds_cat]['W']
             else:
                 weights = None
-            pz_cat, z_vals = catalog_to_histogram(z_cat, redshift_bins,
+            pz_cat, z_vals ,edges= catalog_to_histogram(z_cat, redshift_bins,
                                                   weights=weights,
                                                   z_min=z_min, z_max=z_max)
 
@@ -94,13 +95,21 @@ def plot(pcs, covs, stats, tags, unknown_catalog, redshift_bins,
 
             label_cat_plot = label_cat + ' ' + redshift_catalog_column + ' $\chi^2 = {{{0:.1f}}}, \mathrm{{d.o.f.}} = {{{1}}}, <x> = {{{2:.3f}}}$'.format(chi2, sum(pc_conds), z_mean_cat)
 
+            pz_cat_2,ztruth=np.histogram(z_cat, redshift_bins)#,normed='True')
+#            ax.hist(pz_cat_2,bins= ztruth,color='blue',alpha=0.4,label='Truth',edgecolor='None')#,
+                          #color= 'blue', alpha= 0.4,label='Photo_z' ,histtype= 'stepfilled',edgecolor='None')
             cat_kwargs = {'x': z_vals, 'y': pz_cat,
-                          'marker': 'None',
-                          'linestyle': '-', 'linewidth': 2,
-                          'color': color, 'alpha': 0.8, 'label': label_cat_plot}
+                                                    'marker': 'None',
+                                                    'linestyle': '-', 'linewidth': 2,
+                                                    'color': color, 'alpha': 0.8, 'label': label_cat_plot}
+
+
 
             # plot
             ax.errorbar(**cat_kwargs)
+#            ax.hist(**cat_kwargs)
+
+#            ax.hist(pz_cat,bins=edges,color= 'blue', alpha= 0.4,label='Photo_z' ,edgecolor='None')
 
         # make legend transparent
         ax.legend(loc='lower right', fancybox=True).get_frame().set_alpha(0.5)
@@ -121,5 +130,6 @@ def make_figure():
     ax.set_xlabel('$z$', fontsize=32)
     ax.set_ylabel(r'$\frac{dN}{dz}$', fontsize=32, rotation=0)
     ax.yaxis.labelpad = 25
+
 
     return fig, ax

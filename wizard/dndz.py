@@ -5,8 +5,9 @@ Go from paircounts to phi(z)
 """
 from __future__ import print_function, division
 import numpy as np
-from astropy.cosmology import Planck15, WMAP9
+import astropy.cosmology
 import pandas as pd
+from astropy.cosmology import WMAP9
 
 def dndz(pairs, redshifts,
          dndz_path='', integrate='paircounts', w_estimator='LS',
@@ -123,6 +124,7 @@ def dndz(pairs, redshifts,
             # jackknives than DuDr for example)
             integrated_pairs[kind] = arr2
         # make w
+
         w = angular_correlation(integrated_pairs, w_estimator=w_estimator)
 
         # make df. we'll use DuDr since you almost always want that anyways
@@ -203,6 +205,7 @@ def dndz(pairs, redshifts,
     if len(tomo_groupby) == 0:
         # put in a fake key so we can just keep using the pandas groupby
         tomo_groupby = ['_group']
+
         df['_group'] = 1
         combine_groupby_keys = tomo_groupby + combine_groupby_keys
         groupby_keys = tomo_groupby + groupby_keys
@@ -235,7 +238,7 @@ def dndz(pairs, redshifts,
     # print(size_post_keys)
     # import ipdb; ipdb.set_trace()
 
-    # 
+    #
     # sizes = df.reset_index().groupby(size_keys).size()
     # sizes = sizes.reset_index().set_index(size_post_keys)
     # # TODO: now drop any that do not equal respective -1 index
